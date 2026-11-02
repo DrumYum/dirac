@@ -303,6 +303,7 @@ export class ToolExecutor {
 			},
 			lowVerbosityEnabled: settings.lowVerbosityEnabled,
 			doubleCheckCompletionEnabled: settings.doubleCheckCompletionEnabled,
+			autoFormatAfterEdit: settings.autoFormatAfterEdit ?? false,
 			vscodeTerminalExecutionMode: this.terminalExecutionMode,
 			enableParallelToolCalling: settings.enableParallelToolCalling,
 			isSubagentExecution: false,

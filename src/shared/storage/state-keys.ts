@@ -280,6 +280,7 @@ const USER_SETTINGS_FIELDS = {
 	backgroundEditEnabled: { default: false as boolean },
 	optOutOfRemoteConfig: { default: false as boolean },
 	doubleCheckCompletionEnabled: { default: false as boolean },
+	autoFormatAfterEdit: { default: false as boolean },
 	lowVerbosityEnabled: { default: true as boolean },
 	cliTerminalColorMode: { default: undefined as "dark" | "light" | undefined },
 	cliVimMode: { default: false as boolean },

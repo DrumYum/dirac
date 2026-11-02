@@ -37,6 +37,7 @@ EDIT TYPES:
 1. replace: Replaces the inclusive range from anchor through end_anchor. For one line, use the same complete anchored line for both endpoints.
 2. insert_after: Inserts text immediately after the complete anchored line in anchor. end_anchor is not used.
 3. insert_before: Inserts text immediately before the complete anchored line in anchor. end_anchor is not used.
+4. delete: Deletes the line(s) from anchor to end_anchor. If end_anchor is omitted, deletes only the anchor line. No text parameter needed (use empty string).
 
 RANGE RULES:
 1. Use the smallest range that fully contains the intended edit.
@@ -72,7 +73,7 @@ Batch all non-overlapping edits into one call. Edits must not overlap; multiple 
 							properties: {
 								edit_type: {
 									type: "string",
-									enum: ["replace", "insert_after", "insert_before"],
+									enum: ["replace", "insert_after", "insert_before", "delete"],
 									description: "Required operation. Use replace, insert_after, or insert_before.",
 								},
 								anchor: {
@@ -84,13 +85,13 @@ Batch all non-overlapping edits into one call. Edits must not overlap; multiple 
 								end_anchor: {
 									type: "string",
 									description:
-										`Semantically required only for replace: the complete ANCHOR${getDelimiter()}CONTENT line at the inclusive end of the range. Use the same value as anchor for one line. Omit for insertions; strict providers may send null, which is normalized to omission before execution.`,
+										`Semantically required only for replace: the complete ANCHOR${getDelimiter()}CONTENT line at the inclusive end of the range. Use the same value as anchor for one line. Omit for insertions and delete (delete defaults to anchor line); strict providers may send null, which is normalized to omission before execution.`,
 									pattern: getAnchoredLinePattern(),
 								},
 								text: {
 									type: "string",
 									description:
-										"Required ordinary source text. Use \\n for new lines and \\\\n for a literal '\\n'. Do not include line anchors.",
+										"Required ordinary source text (empty string for delete). Use \\n for new lines and \\\\n for a literal '\\n'. Do not include line anchors.",
 								},
 							},
 							required: ["edit_type", "anchor", "text"],
@@ -177,7 +178,7 @@ export class EditFileTool implements IDiracTool<EditFileArgs> {
 			// Text typed on the waiting card: the coordinator skips the cards and forwards the text.
 			if (error instanceof ToolSkippedByUserMessage) {
 				// A failing cleanup must not replace the skip, or the typed text is lost.
-				await env.editor.hideReview().catch(() => {})
+				await env.editor.hideReview().catch(() => { })
 				throw error
 			}
 			const executionError = toError(error)

@@ -76,7 +76,7 @@ export const useMentionTrait = (): InputTrait & {
 			context.textAreaRef.current?.focus()
 			context.textAreaRef.current?.setSelectionRange(newCursorPosition, newCursorPosition)
 		}, 0)
-	}, [])
+	}, [searchQuery])
 
 	const onInputChange = (value: string, cursorPosition: number, context: ModularInputContext) => {
 		const showMenu = shouldShowContextMenu(value, cursorPosition)

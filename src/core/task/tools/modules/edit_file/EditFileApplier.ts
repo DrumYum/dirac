@@ -54,12 +54,13 @@ export class EditFileApplier {
 
 		const batchResults = await env.editor.applyAndSaveBatchSilently(filesToApply)
 		const formattedContents = new Map<string, string>()
-
-		for (const batch of preparedBatches) {
-			try {
-				formattedContents.set(batch.absolutePath, await env.editor.format(batch.absolutePath))
-			} catch {
-				// Formatting is best-effort; the confirmed save result remains authoritative.
+		if (env.config.autoFormatAfterEdit) {
+			for (const batch of preparedBatches) {
+				try {
+					formattedContents.set(batch.absolutePath, await env.editor.format(batch.absolutePath))
+				} catch {
+					// Formatting is best-effort; the confirmed save result remains authoritative.
+				}
 			}
 		}
 

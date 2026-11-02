@@ -40,6 +40,7 @@ export function buildWebviewSettingsPatch(request: UpdateSettingsRequest): Parti
 	if (request.worktreesEnabled !== undefined) settings.worktreesEnabled = request.worktreesEnabled
 	if (request.doubleCheckCompletionEnabled !== undefined)
 		settings.doubleCheckCompletionEnabled = request.doubleCheckCompletionEnabled
+	if (request.autoFormatAfterEdit !== undefined) settings.autoFormatAfterEdit = !!request.autoFormatAfterEdit
 	if (request.lowVerbosityEnabled !== undefined) settings.lowVerbosityEnabled = request.lowVerbosityEnabled
 	if (request.writePromptMetadataEnabled !== undefined) settings.writePromptMetadataEnabled = request.writePromptMetadataEnabled
 	if (request.autoApproveAllToggled !== undefined) settings.autoApproveAllToggled = request.autoApproveAllToggled

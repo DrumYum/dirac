@@ -18,7 +18,6 @@ export interface AutoApprovalSettings {
 		editFilesExternally?: boolean // Edit files outside of the working directory
 		executeCommands?: boolean // Auto-approve harmless commands
 		useBrowser: boolean // Use browser
-		applyDiff?: boolean // Apply edits with anchors
 	}
 	// Global settings
 	enableNotifications: boolean // Show notifications for approval and task completion
@@ -36,7 +35,6 @@ export const DEFAULT_AUTO_APPROVAL_SETTINGS: AutoApprovalSettings = {
 		editFilesExternally: false,
 		executeCommands: true,
 		useBrowser: false,
-		applyDiff: false,
 	},
 	enableNotifications: false,
 }

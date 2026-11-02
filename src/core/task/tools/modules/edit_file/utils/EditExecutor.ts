@@ -2,7 +2,7 @@ import { ToolUse } from "@core/assistant-message";
 import { containsAnchoredLine, getDelimiter, parseAnchoredLine } from "@utils/line-hashing";
 import { AppliedEdit, Edit, FailedEdit, ResolvedEdit } from "../types";
 
-const EDIT_TYPES = new Set<Edit["edit_type"]>(["replace", "insert_after", "insert_before"])
+const EDIT_TYPES = new Set<Edit["edit_type"]>(["replace", "insert_after", "insert_before", "delete"])
 
 export class EditExecutor {
 	resolveEdits(
@@ -27,10 +27,15 @@ export class EditExecutor {
 				if (start.error) diagnostics.push(start.error)
 
 				let endIdx = start.index
-				if (edit.edit_type === "replace") {
-					const end = this.resolveAnchor("end_anchor", edit.end_anchor, lineAnchors, lines)
-					if (end.error) diagnostics.push(end.error)
-					endIdx = end.index
+				if (edit.edit_type === "replace" || edit.edit_type === "delete") {
+					// For replace: end_anchor is required (validated above)
+					// For delete: end_anchor is optional, defaults to anchor (single-line delete)
+					if (edit.end_anchor) {
+						const end = this.resolveAnchor("end_anchor", edit.end_anchor, lineAnchors, lines)
+						if (end.error) diagnostics.push(end.error)
+						endIdx = end.index
+					}
+					if (edit.edit_type === "delete") edit.text = ""
 				}
 				if (start.index !== -1 && endIdx !== -1 && endIdx < start.index) {
 					diagnostics.push("Range error: anchor must precede or equal end_anchor.")
@@ -57,9 +62,9 @@ export class EditExecutor {
 	private validateEdit(edit: Edit | undefined): string | undefined {
 		if (!edit || typeof edit !== "object" || Array.isArray(edit)) return "The edit must be an object."
 		if (!EDIT_TYPES.has(edit.edit_type)) {
-			return "edit_type is required and must be replace, insert_after, or insert_before."
+			return "edit_type is required and must be replace, insert_after, insert_before, or delete."
 		}
-		if (typeof edit.text !== "string") return "text is required and must be a string."
+		if (edit.edit_type !== "delete" && typeof edit.text !== "string") return "text is required and must be a string."
 		if (containsAnchoredLine(edit.text)) {
 			return "text must contain ordinary source text only; remove line anchors from replacement text."
 		}
@@ -102,7 +107,12 @@ export class EditExecutor {
 		if (parsed.content !== lines[index]) {
 			return {
 				index: -1,
-				error: `${type} has a valid line ID but the paired content does not exactly match the current source line. Expected: "${lines[index]}", Provided: "${parsed.content}".`,
+				error: (() => {
+					const cr = 2, cs = Math.max(0, index - cr), ce = Math.min(lines.length - 1, index + cr)
+					const ctx = []
+					for (let i = cs; i <= ce; i++) ctx.push(`${i === index ? ">>>" : "   "} [${i}] ${lines[i]}`)
+					return `${type} has a valid line ID but the paired content does not exactly match the current source line.\nExpected: "${lines[index]}"\nProvided: "${parsed.content}"\nContext (target line marked with >>>):\n${ctx.join("\n")}`
+				})(),
 			}
 		}
 		return { index }

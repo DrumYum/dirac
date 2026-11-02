@@ -4,7 +4,7 @@ import type { ToolResponse } from "../../types/ToolResponse"
 export interface Edit {
 	anchor: string
 	end_anchor?: string
-	edit_type: "replace" | "insert_after" | "insert_before"
+	edit_type: "replace" | "insert_after" | "insert_before" | "delete"
 	text: string
 }
 

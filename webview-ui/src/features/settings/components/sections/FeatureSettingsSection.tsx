@@ -77,6 +77,13 @@ const editorFeatures: FeatureToggle[] = [
 		settingKey: "backgroundEditEnabled",
 	},
 	{
+		id: "auto-format-after-edit",
+		label: "Auto Format After Edit",
+		description: "Automatically format files after edit_file applies changes",
+		stateKey: "autoFormatAfterEdit",
+		settingKey: "autoFormatAfterEdit",
+	},
+	{
 		id: "checkpoints",
 		label: "Checkpoints",
 		description: "Save progress at key points for easy rollback",
@@ -200,6 +207,7 @@ const FeatureSettingsSection = ({ renderSectionHeader }: FeatureSettingsSectionP
 		enableParallelToolCalling,
 		backgroundEditEnabled,
 		doubleCheckCompletionEnabled,
+		autoFormatAfterEdit,
 		lowVerbosityEnabled,
 	} = useSettingsStore()
 
@@ -217,6 +225,7 @@ const FeatureSettingsSection = ({ renderSectionHeader }: FeatureSettingsSectionP
 		enableParallelToolCalling,
 		backgroundEditEnabled,
 		doubleCheckCompletionEnabled,
+		autoFormatAfterEdit,
 		lowVerbosityEnabled,
 		yoloModeToggled: isYoloRemoteLocked ? remoteConfigSettings?.yoloModeToggled : yoloModeToggled,
 	}

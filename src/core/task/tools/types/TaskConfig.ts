@@ -45,6 +45,7 @@ export interface TaskConfig {
 	yoloModeToggled: boolean
 	lowVerbosityEnabled: boolean
 	doubleCheckCompletionEnabled: boolean
+	autoFormatAfterEdit: boolean
 	vscodeTerminalExecutionMode: "vscodeTerminal" | "backgroundExec"
 	enableParallelToolCalling: boolean
 	isSubagentExecution: boolean

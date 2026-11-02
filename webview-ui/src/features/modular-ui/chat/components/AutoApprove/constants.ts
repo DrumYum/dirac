@@ -39,12 +39,6 @@ export const ACTION_METADATA: ActionMetadata[] = [
 		shortName: "Browser",
 		icon: "codicon-globe",
 	},
-	{
-		id: "applyDiff",
-		label: "Apply edits with anchors",
-		shortName: "Edit (anchors)",
-		icon: "codicon-edit",
-	},
 ]
 
 export const NOTIFICATIONS_SETTING: ActionMetadata = {

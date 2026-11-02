@@ -308,6 +308,7 @@ message Settings {
   optional bool utility_model_use_permission_handling = 212;
   optional string utility_model_permission_policy = 213;
   optional string plan_mode_inference_speed = 214;
+  optional bool auto_format_after_edit = 217;
   optional string act_mode_inference_speed = 215;
   optional bool cli_vim_mode = 216;
 }
@@ -454,6 +455,7 @@ message UpdateSettingsRequest {
   reserved "utility_model_use_new_task";
   optional bool utility_model_use_generate_commit_message = 52;
   optional bool low_verbosity_enabled = 53;
+  optional bool auto_format_after_edit = 56;
   optional bool utility_model_use_permission_handling = 54;
   optional string utility_model_permission_policy = 55;
 }
