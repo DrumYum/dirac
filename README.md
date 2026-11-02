@@ -4,7 +4,7 @@ Dirac itself builds on [Cline](https://github.com/cline/cline) — credit to the
 ## Changes over upstream
 
 ### Settings
-- **Auto Format After Edit** — new toggle in Settings → Features → Editor. Off by default. When enabled, `edit_file` runs the configured formatter after applying changes.
+- **Auto Format After Edit** — new toggle in Settings → Running Tasks. Off by default. When enabled, `edit_file` runs the configured formatter after applying changes.
 
 ### edit_file improvements
 - **`delete` edit type** — delete line(s) without specifying `text` or `end_anchor`. Single-line delete: just `anchor`. Multi-line: add `end_anchor`.
@@ -15,6 +15,7 @@ Dirac itself builds on [Cline](https://github.com/cline/cline) — credit to the
 
 ### Cleanup
 - **Removed dead "Edit (anchors)" auto-approve toggle** — the `applyDiff` setting was never read by any logic; removed from settings and UI.
+- **Removed 3 dead settings sections** — `AboutSection`, `DebugSection`, `FeatureSettingsSection` were unmounted leftovers from a settings restructure; all their content was already duplicated in active sections.
 
 ## License
 Apache License 2.0. See [LICENSE](LICENSE).
