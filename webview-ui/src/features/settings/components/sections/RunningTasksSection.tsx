@@ -12,6 +12,7 @@ type TaskSettingKey =
 	| "enableParallelToolCalling"
 	| "doubleCheckCompletionEnabled"
 	| "backgroundEditEnabled"
+	| "autoFormatAfterEdit"
 	| "enableCheckpointsSetting"
 	| "worktreesEnabled"
 
@@ -29,6 +30,7 @@ const RunningTasksSection = ({ renderSectionHeader }: RunningTasksSectionProps) 
 		backgroundEditEnabled,
 		doubleCheckCompletionEnabled,
 		enableCheckpointsSetting,
+		autoFormatAfterEdit,
 		enableParallelToolCalling,
 		subagentsEnabled,
 		worktreesEnabled,
@@ -64,6 +66,13 @@ const RunningTasksSection = ({ renderSectionHeader }: RunningTasksSectionProps) 
 			description: "Apply edits without taking focus from the active editor.",
 			settingKey: "backgroundEditEnabled",
 			checked: backgroundEditEnabled,
+		},
+		{
+			id: "auto-format-after-edit",
+			label: "Auto format after edit",
+			description: "Run the configured formatter on files after edit_file applies changes.",
+			settingKey: "autoFormatAfterEdit",
+			checked: autoFormatAfterEdit,
 		},
 		{
 			id: "checkpoints",
