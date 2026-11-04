@@ -1,6 +1,6 @@
 import type { Anthropic } from "@anthropic-ai/sdk"
 import { GoalController } from "@core/goal/GoalController"
-import { projectUIActionState } from "@core/task/utils/ui-projector"
+import { projectPreservedThinkingMessageIds, projectUIActionState } from "@core/task/utils/ui-projector"
 import type { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager"
 import { HostProvider } from "@hosts/host-provider"
 import { cleanupLegacyCheckpoints } from "@integrations/checkpoints/CheckpointMigration"
@@ -432,10 +432,23 @@ export class Controller implements ITaskHost {
 		const surfaceId = selectedGoalId ?? task?.taskId
 		const operations = task?.messageStateHandler.getPendingPresentationOperations() ?? []
 		const maxConsecutiveMistakes = this.stateManager.getGlobalSettingsKey("maxConsecutiveMistakes")
+		const apiConfiguration = this.stateManager.getApiConfiguration()
+		const mode = this.stateManager.getGlobalSettingsKey("mode")
+		const configuredProviderId =
+			(mode === "plan" ? apiConfiguration.planModeApiProvider : apiConfiguration.actModeApiProvider) ??
+			apiConfiguration.apiProvider
+
 		const state: Partial<ExtensionState> = controlState ?? {
 			presentationSurfaceId: surfaceId,
 			presentationOffset: task?.messageStateHandler.getPresentationOffset(),
 			activeVoiceStreamId: task?.stateView.activeVoiceStreamId,
+			preservedThinkingMessageIds: projectPreservedThinkingMessageIds(
+				task?.messageStateHandler.getApiConversationHistory() ?? [],
+				task?.messageStateHandler.getDiracMessages(),
+				(task?.api?.getModel()?.info as any)?.preserveThinking ?? "off",
+				configuredProviderId,
+				task?.stateView.conversationHistoryDeletedRange,
+			),
 			isApiRequestActive: task?.stateView.isApiRequestActive ?? false,
 			taskStatus: task?.stateView.status ?? TaskStatus.IDLE,
 			uiActionState: projectUIActionState(

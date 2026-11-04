@@ -12,6 +12,7 @@ export interface ChatRowProps {
 	onAction?: (value: string, cardId?: string) => void
 	activeCardId?: string
 	activeVoiceStreamId?: string
+	isPreservedThinking?: boolean
 }
 
 export type DisplayUnitStatus = "pending" | "active" | "success" | "error"

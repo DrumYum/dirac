@@ -13,6 +13,7 @@ interface ThinkingRowProps {
 	onToggle?: () => void
 	title?: string
 	isStreaming?: boolean
+	isPreservedThinking?: boolean
 	streamingMessageId?: string
 	showChevron?: boolean
 	onAskForUpdate?: () => void
@@ -27,6 +28,7 @@ export const ThinkingRow = memo(
 		onToggle,
 		title = "Thinking",
 		isStreaming = false,
+		isPreservedThinking = false,
 		streamingMessageId,
 		showChevron = true,
 		onAskForUpdate,
@@ -88,7 +90,7 @@ export const ThinkingRow = memo(
 		const showAskForUpdate = isStreaming && thinkingTime >= 60 && onAskForUpdate
 
 		return (
-			<div className="border-l-2 border-link/30 pl-3 my-1 transition-all duration-300">
+			<div className={cn("border-l-2 pl-3 my-1 transition-all duration-300", isPreservedThinking || isStreaming ? "border-link/50" : "border-link/20")}>
 				{/* Header row */}
 				{showTitle && (
 					<div
@@ -106,11 +108,12 @@ export const ThinkingRow = memo(
 							}
 						}}>
 						{/* Thinking indicator */}
-						<span className="flex-shrink-0">
+						<span className="flex-shrink-0" title={isStreaming ? "Model is currently thinking" : isPreservedThinking ? "Included in the model's active context" : "Not included in the model's active context"}>
 							<Lightbulb
 								className={cn("size-3 transition-[color,filter,opacity] duration-700 ease-out", {
 									"text-warning/80 animate-bulb-glow": isStreaming,
-									"text-description/25": !isStreaming,
+									"text-link/80": !isStreaming && isPreservedThinking,
+									"text-description/25": !isStreaming && !isPreservedThinking,
 								})}
 							/>
 						</span>
@@ -123,6 +126,14 @@ export const ThinkingRow = memo(
 							})}>
 							{title}
 						</span>
+
+						{isPreservedThinking && (
+							<span
+								className="ml-1 rounded bg-link/10 px-1.5 py-0.5 text-[10px] leading-none font-medium text-link/80 transition-opacity duration-300"
+								title="This thinking block is currently sent to the model as part of the conversation context">
+								in context
+							</span>
+						)}
 
 						{/* Elapsed time — inline, subtle */}
 						{isStreaming && thinkingTime > 0 && (

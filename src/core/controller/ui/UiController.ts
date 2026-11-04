@@ -1,6 +1,7 @@
 import type { StateManager } from "@core/storage/StateManager"
 import { Task } from "@core/task"
-import { projectUIActionState } from "@core/task/utils/ui-projector"
+import { projectPreservedThinkingMessageIds, projectUIActionState } from "@core/task/utils/ui-projector"
+
 import { detectWorkspaceRoots } from "@core/workspace/detection"
 import { setupWorkspaceManager } from "@core/workspace/setup"
 import type { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager"
@@ -97,6 +98,13 @@ export async function getStateToPostToWebview(deps: {
 		primaryRootIndex: resolvedWorkspaceManager?.getPrimaryIndex() ?? 0,
 		isMultiRootWorkspace: (resolvedWorkspaceManager?.getRoots().length ?? 0) > 1,
 		activeVoiceStreamId: task?.stateView.activeVoiceStreamId,
+		preservedThinkingMessageIds: projectPreservedThinkingMessageIds(
+			task?.messageStateHandler.getApiConversationHistory() ?? [],
+			diracMessages ?? task?.messageStateHandler.getDiracMessages(),
+			(task?.api?.getModel()?.info as any)?.preserveThinking ?? "off",
+			configuredProviderId,
+			task?.stateView.conversationHistoryDeletedRange,
+		),
 		taskStatus: task?.stateView.status || TaskStatus.IDLE,
 		isApiRequestActive: task?.stateView.isApiRequestActive || false,
 		uiActionState: projectUIActionState(

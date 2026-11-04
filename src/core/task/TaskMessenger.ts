@@ -72,6 +72,9 @@ export class TaskMessenger implements ITaskMessenger {
 		this.dependencies.taskState.attachVoiceStream(id)
 		await this.dependencies.messageStateHandler.addToDiracMessages(message)
 		await this.postPresentationToWebview()
+		if (isReasoning) {
+			await this.dependencies.postStateToWebview()
+		}
 
 		const handle: ITextStreamHandle = {
 			id,
@@ -101,6 +104,9 @@ export class TaskMessenger implements ITaskMessenger {
 					}
 					this.dependencies.taskState.detachVoiceStream(id)
 					await this.postPresentationToWebview()
+					if (isReasoning) {
+						await this.dependencies.postStateToWebview()
+					}
 				}
 
 				if (this.activeVoiceStream === handle) {

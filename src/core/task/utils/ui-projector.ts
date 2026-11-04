@@ -7,10 +7,50 @@ import {
 	UIActionButton,
 	UIActionButtonType,
 	UIActionState,
-} from "@shared/ExtensionMessage"
-import { isBusyTaskStatus } from "@shared/taskStatusProjection"
-import { DiracAskResponse } from "@shared/WebviewMessage"
-import { ReadonlyTaskState } from "../TaskState"
+} from "@shared/ExtensionMessage";
+import { isBusyTaskStatus } from "@shared/taskStatusProjection";
+import { DiracAskResponse } from "@shared/WebviewMessage";
+import { ReadonlyTaskState } from "../TaskState";
+import { getPreservedThinkingStartIndex, PreserveThinkingMode } from "@core/api/transform/openai-format";
+import type { DiracStorageMessage } from "@shared/messages/content";
+
+/**
+ * Returns the IDs of reasoning messages in `diracMessages` whose thinking blocks
+ * are currently preserved in the model's context.
+ *
+ * Uses `getPreservedThinkingStartIndex` (shared with `convertToOpenAiMessages`) to find
+ * the boundary, then checks each reasoning message's `conversationHistoryIndex` against it.
+ * Always use `>= startIndex` (see JSDoc on `getPreservedThinkingStartIndex`).
+ */
+export function projectPreservedThinkingMessageIds(
+	apiHistory: readonly Omit<DiracStorageMessage, "modelInfo">[],
+	diracMessages: readonly { id: string; content: { type: string; isReasoning?: boolean; content?: string }; conversationHistoryIndex?: number }[] | undefined,
+	preserveThinking: PreserveThinkingMode,
+	providerId?: import("@shared/api").ApiProvider,
+	conversationHistoryDeletedRange?: [number, number],
+): string[] {
+	if (!diracMessages || diracMessages.length === 0) return []
+
+	const startIndex = getPreservedThinkingStartIndex(apiHistory, preserveThinking, providerId)
+	if (!Number.isFinite(startIndex)) return []
+
+	const preservedIds: string[] = []
+	for (const msg of diracMessages) {
+		if (msg.content.type !== "markdown" || !msg.content.isReasoning) continue
+
+		const historyIdx = msg.conversationHistoryIndex ?? -1
+		// Skip messages in the compacted/deleted range
+		if (conversationHistoryDeletedRange && historyIdx >= conversationHistoryDeletedRange[0] && historyIdx <= conversationHistoryDeletedRange[1]) {
+			continue
+		}
+		// Use >= startIndex (see JSDoc on getPreservedThinkingStartIndex)
+		if (historyIdx >= startIndex) {
+			preservedIds.push(msg.id)
+		}
+	}
+
+	return preservedIds
+}
 
 export function projectUIActionState(
 	state: ReadonlyTaskState | undefined,

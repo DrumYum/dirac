@@ -52,6 +52,7 @@ export interface ChatState {
 
 	uiActionState?: UIActionState
 	activeVoiceStreamId?: string
+	preservedThinkingMessageIds?: string[]
 	isApiRequestActive?: boolean
 	taskStatus?: TaskStatus
 }

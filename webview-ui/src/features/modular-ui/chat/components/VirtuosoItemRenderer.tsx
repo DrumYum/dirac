@@ -14,6 +14,7 @@ interface MessageRendererProps {
 	messageHandlers: MessageHandlers
 	activeCardId?: string
 	activeVoiceStreamId?: string
+	isPreservedThinking?: boolean
 }
 
 /** Renders one virtualized protocol message. */
@@ -27,6 +28,7 @@ export const MessageRenderer = memo(
 		messageHandlers,
 		activeCardId,
 		activeVoiceStreamId,
+		isPreservedThinking,
 	}: MessageRendererProps) => {
 		const message = useChatStore((state) => {
 			const index = state.messageIndexById.get(messageId)
@@ -42,6 +44,7 @@ export const MessageRenderer = memo(
 				<ChatRow
 					activeCardId={activeCardId}
 					activeVoiceStreamId={activeVoiceStreamId}
+					isPreservedThinking={isPreservedThinking}
 					isExpanded={expandedRows[message.id] || false}
 					key={message.id}
 					message={message}

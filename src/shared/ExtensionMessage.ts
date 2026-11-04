@@ -18,17 +18,17 @@ import { DiracMessageModelInfo } from "./messages"
 import type { ReleaseNotesView } from "./release-notes"
 import { OnboardingModelGroup } from "./proto/dirac/state"
 import {
-	DEFAULT_INFERENCE_SPEED,
-	DEFAULT_OPENAI_REASONING_EFFORT,
-	INFERENCE_SPEED_LABELS,
-	INFERENCE_SPEED_OPTIONS,
-	InferenceSpeed,
-	isInferenceSpeed,
-	isOpenaiReasoningEffort,
-	Mode,
-	OPENAI_REASONING_EFFORT_LABELS,
-	OPENAI_REASONING_EFFORT_OPTIONS,
-	OpenaiReasoningEffort,
+    DEFAULT_INFERENCE_SPEED,
+    DEFAULT_OPENAI_REASONING_EFFORT,
+    INFERENCE_SPEED_LABELS,
+    INFERENCE_SPEED_OPTIONS,
+    InferenceSpeed,
+    isInferenceSpeed,
+    isOpenaiReasoningEffort,
+    Mode,
+    OPENAI_REASONING_EFFORT_LABELS,
+    OPENAI_REASONING_EFFORT_OPTIONS,
+    OpenaiReasoningEffort,
 } from "./storage/types"
 export type { InferenceSpeed, Mode, OpenaiReasoningEffort }
 export {
@@ -131,6 +131,8 @@ export interface ExtensionState {
 	localAgentsRulesToggles: DiracRulesToggles
 	/** The ID of the message currently being streamed (markdown/reasoning) */
 	activeVoiceStreamId?: string
+	/** IDs of reasoning messages currently preserved in the model's context */
+	preservedThinkingMessageIds?: string[]
 	/** Whether an API request is currently in flight */
 	isApiRequestActive?: boolean
 	strictPlanModeEnabled?: boolean

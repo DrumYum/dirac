@@ -41,7 +41,8 @@ export const MessagesArea: React.FC<MessagesAreaProps> = ({
 		followOutput,
 	} = scrollBehavior
 
-	const { activeVoiceStreamId } = chatState
+	const { activeVoiceStreamId, preservedThinkingMessageIds } = chatState
+	const preservedThinkingIdSet = useMemo(() => new Set(preservedThinkingMessageIds ?? []), [preservedThinkingMessageIds])
 	const { expandedRows, setActiveQuote, uiActionState } = chatState
 	const activeCardId = uiActionState?.activeCardId
 	const messageHandlersRef = useRef(messageHandlers)
@@ -63,6 +64,7 @@ export const MessagesArea: React.FC<MessagesAreaProps> = ({
 				activeVoiceStreamId={activeVoiceStreamId}
 				expandedRows={expandedRows}
 				isLastMessage={index === renderedMessageIds.length - 1}
+				isPreservedThinking={preservedThinkingIdSet.has(messageId)}
 				messageHandlers={stableMessageHandlers}
 				messageId={messageId}
 				onSetQuote={setActiveQuote}

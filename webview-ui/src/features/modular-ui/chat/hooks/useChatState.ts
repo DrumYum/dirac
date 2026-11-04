@@ -30,6 +30,7 @@ export function useChatState(): ChatState {
 			task: state.taskMessage,
 			uiActionState: state.uiActionState,
 			activeVoiceStreamId: state.activeVoiceStreamId,
+			preservedThinkingMessageIds: state.preservedThinkingMessageIds,
 			isApiRequestActive: state.isApiRequestActive,
 			taskStatus: state.taskStatus,
 		})),

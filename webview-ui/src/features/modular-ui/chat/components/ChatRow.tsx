@@ -16,6 +16,7 @@ const ChatRow = memo(
 			prevProps.isExpanded === nextProps.isExpanded &&
 			prevProps.activeCardId === nextProps.activeCardId &&
 			prevProps.activeVoiceStreamId === nextProps.activeVoiceStreamId &&
+			prevProps.isPreservedThinking === nextProps.isPreservedThinking &&
 			prevProps.onAction === nextProps.onAction &&
 			prevProps.onApprove === nextProps.onApprove &&
 			prevProps.onCancelCommand === nextProps.onCancelCommand &&

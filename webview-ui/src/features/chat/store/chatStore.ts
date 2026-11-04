@@ -32,6 +32,7 @@ interface ChatState {
 	goal?: NonNullable<ExtensionState["goal"]>
 	uiActionState?: ExtensionState["uiActionState"]
 	activeVoiceStreamId?: string
+	preservedThinkingMessageIds?: string[]
 	isApiRequestActive?: boolean
 	taskStatus?: TaskStatus
 	cardCollapsedStates: Record<string, boolean>
@@ -399,6 +400,7 @@ export const useChatStore = create<ChatState>((set) => ({
 	goal: undefined,
 	uiActionState: undefined,
 	activeVoiceStreamId: undefined,
+	preservedThinkingMessageIds: undefined,
 	isApiRequestActive: false,
 	taskStatus: undefined,
 	cardCollapsedStates: {},
@@ -440,6 +442,7 @@ export const useChatStore = create<ChatState>((set) => ({
 			if ("goal" in extensionState) update.goal = extensionState.goal ?? undefined
 			if ("uiActionState" in extensionState) update.uiActionState = extensionState.uiActionState
 			update.activeVoiceStreamId = extensionState.activeVoiceStreamId
+			if ("preservedThinkingMessageIds" in extensionState) update.preservedThinkingMessageIds = extensionState.preservedThinkingMessageIds
 			if ("isApiRequestActive" in extensionState) update.isApiRequestActive = extensionState.isApiRequestActive
 			if ("taskStatus" in extensionState) update.taskStatus = extensionState.taskStatus
 			return update

@@ -17,6 +17,7 @@ export const MessageRenderer = memo(
 		onAction,
 		activeCardId,
 		activeVoiceStreamId,
+		isPreservedThinking,
 	}: ChatRowProps) => {
 		const onAskForUpdate = async () => {
 			await onCancelCommand?.()
@@ -43,6 +44,7 @@ export const MessageRenderer = memo(
 							images={message.content.images}
 							isExpanded={isExpanded}
 							isReasoning={message.content.isReasoning}
+							isPreservedThinking={isPreservedThinking}
 							onAskForUpdate={onAskForUpdate}
 							onSetQuote={onSetQuote}
 							onToggleExpand={() => onToggleExpand(message.id)}

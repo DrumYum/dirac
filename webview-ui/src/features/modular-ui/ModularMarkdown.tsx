@@ -14,6 +14,7 @@ const NOOP = () => { }
 interface ModularMarkdownProps {
 	content: string
 	isReasoning?: boolean
+	isPreservedThinking?: boolean
 	images?: string[]
 	files?: string[]
 	partial?: boolean
@@ -30,6 +31,7 @@ export const ModularMarkdown = memo(
 	({
 		content,
 		isReasoning,
+		isPreservedThinking,
 		images,
 		files,
 		partial,
@@ -46,6 +48,7 @@ export const ModularMarkdown = memo(
 		if (isReasoning) {
 			return (
 				<ThinkingRow
+					isPreservedThinking={isPreservedThinking}
 					isExpanded={isExpanded || false}
 					isStreaming={partial}
 					isVisible={true}
