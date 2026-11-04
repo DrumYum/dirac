@@ -41,16 +41,16 @@ describe("NebiusHandler", () => {
 			model.info.supportsTools!.should.equal(true)
 		})
 
-		it("returns registered Kimi models with isR1FormatRequired", () => {
+		it("returns registered Kimi models with preserveThinking", () => {
 			const handlerK26 = new NebiusHandler({ nebiusApiKey: "test-key", apiModelId: "moonshotai/Kimi-K2.6" })
 			const modelK26 = handlerK26.getModel()
 			modelK26.id.should.equal("moonshotai/Kimi-K2.6")
-			;(modelK26.info as any).isR1FormatRequired.should.equal(true)
+			;modelK26.info.preserveThinking!.should.equal("all")
 
 			const handlerK3 = new NebiusHandler({ nebiusApiKey: "test-key", apiModelId: "moonshotai/Kimi-K3" })
 			const modelK3 = handlerK3.getModel()
 			modelK3.id.should.equal("moonshotai/Kimi-K3")
-			;(modelK3.info as any).isR1FormatRequired.should.equal(true)
+			;modelK3.info.preserveThinking!.should.equal("all")
 		})
 
 		it("logs an error and falls back to default when unknown model is requested", () => {
@@ -66,7 +66,7 @@ describe("NebiusHandler", () => {
 	})
 
 	describe("Message formatting & Multi-turn Tool Calls", () => {
-		it("applies addReasoningContent for Kimi models on multi-turn messages with reasoning", async () => {
+		it("preserves reasoning_content for Kimi models on multi-turn messages", async () => {
 			const handler = new NebiusHandler({
 				nebiusApiKey: "test-key",
 				apiModelId: "moonshotai/Kimi-K2.6",

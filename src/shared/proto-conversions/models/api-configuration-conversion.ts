@@ -1,25 +1,25 @@
 import {
-	LiteLLMModelInfo,
-	OpenAiCompatibleModelInfo,
-	OpenAiCompatibleProfile,
-	OpenRouterModelInfo,
-	ModelsApiConfiguration as ProtoApiConfiguration,
-	ApiProvider as ProtoApiProvider,
-	OcaModelInfo as ProtoOcaModelInfo,
-	ThinkingConfig,
+    LiteLLMModelInfo,
+    OpenAiCompatibleModelInfo,
+    OpenAiCompatibleProfile,
+    OpenRouterModelInfo,
+    ModelsApiConfiguration as ProtoApiConfiguration,
+    ApiProvider as ProtoApiProvider,
+    OcaModelInfo as ProtoOcaModelInfo,
+    ThinkingConfig,
 } from "@shared/proto/dirac/models"
 import type { ModelProviderSelection as ProtoModelProviderSelection } from "@shared/proto/dirac/state"
 import {
-	ApiConfiguration,
-	ApiProvider,
-	LiteLLMModelInfo as AppLiteLLMModelInfo,
-	ModelProviderSelection as AppModelProviderSelection,
-	OpenAiCompatibleModelInfo as AppOpenAiCompatibleModelInfo,
-	OpenAiCompatibleProfile as AppOpenAiCompatibleProfile,
-	BedrockModelId,
-	ModelInfo,
-	OcaModelInfo,
-	openAiModelInfoSaneDefaults,
+    ApiConfiguration,
+    ApiProvider,
+    LiteLLMModelInfo as AppLiteLLMModelInfo,
+    ModelProviderSelection as AppModelProviderSelection,
+    OpenAiCompatibleModelInfo as AppOpenAiCompatibleModelInfo,
+    OpenAiCompatibleProfile as AppOpenAiCompatibleProfile,
+    BedrockModelId,
+    ModelInfo,
+    OcaModelInfo,
+    openAiModelInfoSaneDefaults,
 } from "../../api"
 import { isOpenaiReasoningEffort, normalizeInferenceSpeed, type OpenaiReasoningEffort } from "../../storage/types"
 
@@ -248,7 +248,7 @@ function convertOpenAiCompatibleModelInfoToProto(
 		description: info.description,
 		tiers: info.tiers || [],
 		temperature: info.temperature,
-		isR1FormatRequired: info.isR1FormatRequired,
+		preserveThinking: info.preserveThinking,
 		supportsFastMode: info.supportsFastMode,
 		fastModePriceMultiplier: info.fastModePriceMultiplier,
 	}
@@ -304,7 +304,7 @@ function convertProtoToOpenAiCompatibleModelInfo(
 		description: info.description,
 		tiers: info.tiers.length > 0 ? info.tiers : undefined,
 		temperature: info.temperature,
-		isR1FormatRequired: info.isR1FormatRequired,
+		preserveThinking: info.preserveThinking === "interleaved" || info.preserveThinking === "all" ? info.preserveThinking : undefined,
 	}
 }
 

@@ -1,10 +1,10 @@
 import { LiteLLMModelInfo, ModelInfo, OcaModelInfo, OpenAiCompatibleModelInfo, openAiModelInfoSaneDefaults } from "@shared/api"
 import {
-	OpenRouterModelInfo,
-	LiteLLMModelInfo as ProtoLiteLLMModelInfo,
-	OcaModelInfo as ProtoOcaModelInfo,
-	OpenAiCompatibleModelInfo as ProtoOpenAiCompatibleModelInfo,
-	ThinkingConfig,
+    OpenRouterModelInfo,
+    LiteLLMModelInfo as ProtoLiteLLMModelInfo,
+    OcaModelInfo as ProtoOcaModelInfo,
+    OpenAiCompatibleModelInfo as ProtoOpenAiCompatibleModelInfo,
+    ThinkingConfig,
 } from "@shared/proto/dirac/models"
 import { isOpenaiReasoningEffort, type OpenaiReasoningEffort } from "@shared/storage/types"
 
@@ -124,7 +124,7 @@ export function fromProtobufOpenAiCompatibleModelInfo(
 		supportsGlobalEndpoint: protoInfo.supportsGlobalEndpoint,
 		tiers: protoInfo.tiers.length > 0 ? protoInfo.tiers : undefined,
 		temperature: protoInfo.temperature,
-		isR1FormatRequired: protoInfo.isR1FormatRequired,
+		preserveThinking: protoInfo.preserveThinking === "interleaved" || protoInfo.preserveThinking === "all" ? protoInfo.preserveThinking as "interleaved" | "all" : undefined,
 		supportsStrictTools: protoInfo.supportsStrictTools,
 	}
 }

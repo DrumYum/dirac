@@ -35,7 +35,7 @@ describe("MoonshotHandler", () => {
 			inputPrice: 3.0,
 			outputPrice: 15.0,
 			cacheReadsPrice: 0.3,
-			isR1FormatRequired: true,
+			preserveThinking: "all",
 		})
 	})
 

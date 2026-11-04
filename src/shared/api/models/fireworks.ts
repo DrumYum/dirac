@@ -8,7 +8,7 @@ export const fireworksDefaultModelId: FireworksModelId = "accounts/fireworks/mod
 export const fireworksModels = {
 	"accounts/fireworks/models/kimi-k2p6": {
 		...MODEL_CAPABILITIES["kimi-k2.6"],
-		isR1FormatRequired: true,
+		preserveThinking: "all",
 		maxTokens: 16384,
 		contextWindow: 262144,
 		supportsPromptCache: true,
@@ -20,7 +20,7 @@ export const fireworksModels = {
 	},
 	"accounts/fireworks/models/kimi-k2p5": {
 		...MODEL_CAPABILITIES["kimi-k2.5"],
-		isR1FormatRequired: true,
+		preserveThinking: "all",
 		maxTokens: 16384,
 		contextWindow: 262144,
 		supportsPromptCache: true,

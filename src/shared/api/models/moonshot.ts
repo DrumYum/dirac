@@ -11,7 +11,7 @@ export const moonshotModels = {
 		inputPrice: 3.0,
 		outputPrice: 15.0,
 		cacheReadsPrice: 0.3,
-		isR1FormatRequired: true,
+		preserveThinking: "all",
 	},
 	"kimi-k2.6": {
 		...MODEL_CAPABILITIES["kimi-k2.6"],
@@ -20,7 +20,7 @@ export const moonshotModels = {
 		outputPrice: 4.0,
 		cacheReadsPrice: 0.16,
 		temperature: 1.0,
-		isR1FormatRequired: true,
+		preserveThinking: "all",
 	},
 	"kimi-k2.5": {
 		...MODEL_CAPABILITIES["kimi-k2.5"],
@@ -29,7 +29,7 @@ export const moonshotModels = {
 		outputPrice: 3.0,
 		cacheReadsPrice: 0.1,
 		temperature: 1.0,
-		isR1FormatRequired: true,
+		preserveThinking: "all",
 	},
 	"kimi-k2-0905-preview": {
 		...MODEL_CAPABILITIES["kimi-k2-0905-preview"],
@@ -37,7 +37,7 @@ export const moonshotModels = {
 		inputPrice: 0.6,
 		outputPrice: 2.5,
 		temperature: 0.6,
-		isR1FormatRequired: true,
+		preserveThinking: "all",
 	},
 	"kimi-k2-thinking-turbo": {
 		...MODEL_CAPABILITIES["kimi-k2-thinking-turbo"],
@@ -45,6 +45,6 @@ export const moonshotModels = {
 		inputPrice: 2.4,
 		outputPrice: 10,
 		temperature: 1.0,
-		isR1FormatRequired: true,
+		preserveThinking: "all",
 	},
 } as const satisfies Record<string, OpenAiCompatibleModelInfo>

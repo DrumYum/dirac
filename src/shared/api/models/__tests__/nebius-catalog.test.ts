@@ -2,14 +2,14 @@ import { strict as assert } from "node:assert"
 import { nebiusDefaultModelId, nebiusModels } from "../nebius"
 
 describe("Nebius model catalog (FB-205)", () => {
-	it("registers the Kimi models with isR1FormatRequired for reasoning/tool message formatting", () => {
+	it("registers the Kimi models with preserveThinking for reasoning/tool message formatting", () => {
 		const kimiK26 = nebiusModels["moonshotai/Kimi-K2.6"]
 		const kimiK3 = nebiusModels["moonshotai/Kimi-K3"]
 
 		assert.ok(kimiK26, "moonshotai/Kimi-K2.6 must be registered")
 		assert.ok(kimiK3, "moonshotai/Kimi-K3 must be registered")
-		assert.strictEqual(kimiK26.isR1FormatRequired, true)
-		assert.strictEqual(kimiK3.isR1FormatRequired, true)
+		assert.strictEqual(kimiK26.preserveThinking, "all")
+		assert.strictEqual(kimiK3.preserveThinking, "all")
 	})
 
 	it("registers all GLM models with tool support", () => {

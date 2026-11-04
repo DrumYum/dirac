@@ -248,7 +248,7 @@ describe("Remote Config Schema", () => {
 					{
 						id: TEST_MODEL_IDS.OPENAI,
 						temperature: 0.7,
-						isR1FormatRequired: true,
+						preserveThinking: "all",
 						maxTokens: 4096,
 						contextWindow: 128000,
 						inputPrice: 0.03,
@@ -530,7 +530,7 @@ describe("Remote Config Schema", () => {
 							{
 								id: TEST_MODEL_IDS.OPENAI,
 								temperature: 0.7,
-								isR1FormatRequired: false,
+								
 								maxTokens: 4096,
 								contextWindow: 128000,
 								inputPrice: 0.03,
@@ -540,7 +540,7 @@ describe("Remote Config Schema", () => {
 							{
 								id: TEST_MODEL_IDS.OPENAI_GPT35,
 								temperature: 0.8,
-								isR1FormatRequired: false,
+								
 								maxTokens: 4096,
 								contextWindow: 16000,
 								inputPrice: 0.001,

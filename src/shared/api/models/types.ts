@@ -42,6 +42,7 @@ export interface ModelCapabilities {
 	supportsImages?: boolean
 	supportsReasoning?: boolean
 	supportsReasoningEffort?: boolean
+	preserveThinking?: "off" | "interleaved" | "all"
 	reasoningEffortOptions?: OpenaiReasoningEffort[]
 	defaultReasoningEffort?: OpenaiReasoningEffort
 	supportsAdaptiveThinking?: boolean
@@ -135,7 +136,6 @@ export interface ModelProviderSelection {
 
 export interface OpenAiCompatibleModelInfo extends ModelInfo {
 	temperature?: number
-	isR1FormatRequired?: boolean
 	systemRole?: "developer" | "system"
 	supportsReasoningEffort?: boolean
 	supportsStreaming?: boolean

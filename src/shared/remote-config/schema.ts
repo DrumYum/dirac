@@ -17,7 +17,7 @@ import { z } from "zod"
 export const OpenAiCompatibleModelSchema = z.object({
 	id: z.string(), // The model ID is required
 	temperature: z.number().optional(),
-	isR1FormatRequired: z.boolean().optional(),
+	preserveThinking: z.enum(["off", "interleaved", "all"]).optional(),
 	maxTokens: z.number().optional(),
 	contextWindow: z.number().optional(),
 	inputPrice: z.number().optional(),

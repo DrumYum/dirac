@@ -48,13 +48,13 @@ export const nebiusModels = {
 		supportsPromptCache: false,
 		inputPrice: 0.95,
 		outputPrice: 4,
-		isR1FormatRequired: true,
+		preserveThinking: "all",
 	},
 	"moonshotai/Kimi-K3": {
 		...MODEL_CAPABILITIES["kimi-k3"],
 		supportsPromptCache: false,
 		inputPrice: 3,
 		outputPrice: 15,
-		isR1FormatRequired: true,
+		preserveThinking: "all",
 	},
 } as const satisfies Record<string, OpenAiCompatibleModelInfo>

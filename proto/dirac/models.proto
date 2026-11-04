@@ -568,7 +568,9 @@ message OpenAiCompatibleModelInfo {
   optional string description = 11;
   repeated ModelTier tiers = 12;
   optional double temperature = 13;
-  optional bool is_r1_format_required = 14;
+  reserved 14;
+  reserved "is_r1_format_required";
+  optional string preserve_thinking = 21;
   optional bool supports_strict_tools = 18;
   optional bool supports_fast_mode = 19;
   optional double fast_mode_price_multiplier = 20;
