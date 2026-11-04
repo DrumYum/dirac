@@ -265,3 +265,128 @@ describe("convertToOpenAiMessages", () => {
 		})
 	})
 })
+	describe("preserveThinking interleaved", () => {
+		it("should add reasoning_content to assistant messages after the last real user message", () => {
+			const result = convertToOpenAiMessages(
+				[
+					{ role: "user", content: [{ type: "text", text: "do something", isUserInput: true }] },
+					{
+						role: "assistant",
+						content: [
+							{ type: "thinking", thinking: "let me think", signature: "sig1" },
+							{ type: "text", text: "working on it" },
+						],
+					},
+				] as any,
+				undefined,
+				true,
+				"interleaved",
+			)
+			;(result[1] as any).reasoning_content.should.equal("let me think")
+		})
+
+		it("should NOT add reasoning_content when preserveThinking is off", () => {
+			const result = convertToOpenAiMessages(
+				[
+					{ role: "user", content: [{ type: "text", text: "do something", isUserInput: true }] },
+					{
+						role: "assistant",
+						content: [
+							{ type: "thinking", thinking: "let me think", signature: "sig1" },
+							{ type: "text", text: "working on it" },
+						],
+					},
+				] as any,
+			)
+			should.equal((result[1] as any).reasoning_content, undefined)
+		})
+
+		it("should NOT treat system-generated messages without isUserInput as real user messages", () => {
+			// Simulates: user message -> assistant with thinking -> system message (no isUserInput) -> assistant with thinking
+			const result = convertToOpenAiMessages(
+				[
+					{ role: "user", content: [{ type: "text", text: "do something", isUserInput: true }] },
+					{
+						role: "assistant",
+						content: [
+							{ type: "thinking", thinking: "first thinking", signature: "sig1" },
+							{ type: "text", text: "first response" },
+						],
+					},
+					{ role: "user", content: [{ type: "text", text: "[TASK RESUMPTION] resume..." }], isUserTurn: false } as any,
+					{
+						role: "assistant",
+						content: [
+							{ type: "thinking", thinking: "second thinking", signature: "sig2" },
+							{ type: "text", text: "second response" },
+						],
+					},
+				] as any,
+				undefined,
+				true,
+				"interleaved",
+			)
+			// Both assistant messages should have reasoning_content because the system message is NOT a real user boundary
+			;(result[1] as any).reasoning_content.should.equal("first thinking")
+			;(result[3] as any).reasoning_content.should.equal("second thinking")
+		})
+
+		it("should reset reasoning_content after a real user message with isUserInput", () => {
+			// Simulates: assistant with thinking -> real user message -> assistant with thinking
+			const result = convertToOpenAiMessages(
+				[
+					{
+						role: "assistant",
+						content: [
+							{ type: "thinking", thinking: "old thinking", signature: "sig1" },
+							{ type: "text", text: "old response" },
+						],
+					},
+					{ role: "user", content: [{ type: "text", text: "new instruction", isUserInput: true }] },
+					{
+						role: "assistant",
+						content: [
+							{ type: "thinking", thinking: "new thinking", signature: "sig2" },
+							{ type: "text", text: "new response" },
+						],
+					},
+				] as any,
+				undefined,
+				true,
+				"interleaved",
+			)
+			// First assistant is BEFORE the real user message -> no reasoning_content
+			should.equal((result[0] as any).reasoning_content, undefined)
+			// Second assistant is AFTER -> should have reasoning_content
+			;(result[2] as any).reasoning_content.should.equal("new thinking")
+		})
+
+		it("should NOT treat tool_result messages as real user messages", () => {
+			const result = convertToOpenAiMessages(
+				[
+					{ role: "user", content: [{ type: "text", text: "do something", isUserInput: true }] },
+					{
+						role: "assistant",
+						content: [
+							{ type: "thinking", thinking: "first", signature: "sig1" },
+							{ type: "tool_use", id: "c1", name: "fn", input: {} },
+						],
+					},
+					{ role: "user", content: [{ type: "tool_result", tool_use_id: "c1", content: "done" }] },
+					{
+						role: "assistant",
+						content: [
+							{ type: "thinking", thinking: "second", signature: "sig2" },
+							{ type: "text", text: "finished" },
+						],
+					},
+				] as any,
+				undefined,
+				true,
+				"interleaved",
+			)
+			// tool_result is not a real user boundary
+			;(result[1] as any).reasoning_content.should.equal("first")
+			;(result[3] as any).reasoning_content.should.equal("second")
+		})
+	})

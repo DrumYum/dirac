@@ -107,6 +107,8 @@ export interface DiracStorageMessage extends Anthropic.MessageParam {
 	 * Timestamp of when the message was created
 	 */
 	ts?: number
+	/** True when this message was initiated by real user input (not a tool_result turn). */
+	isUserTurn?: boolean
 }
 
 export interface TranscriptPage {

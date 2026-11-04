@@ -165,6 +165,7 @@ function convertAssistantMessage(
 	content: DiracContent[],
 	provider: ApiProvider | undefined,
 	openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[],
+	includeReasoningContent: boolean,
 ): void {
 	const { nonToolMessages, toolMessages } = content.reduce<{
 		nonToolMessages: (
@@ -196,14 +197,15 @@ function convertAssistantMessage(
 		{ nonToolMessages: [], toolMessages: [] },
 	)
 
-	const contentText =
-		nonToolMessages.length > 0
-			? nonToolMessages
-					.map((part) =>
-						part.type === "text" && (part as DiracTextContentBlock).text ? (part as DiracTextContentBlock).text : "",
-					)
-					.join("\n")
-			: undefined
+	const textParts = nonToolMessages
+		.filter((part) => part.type === "text" && (part as DiracTextContentBlock).text)
+		.map((part) => (part as DiracTextContentBlock).text)
+	const contentText = textParts.length > 0 ? textParts.join("\n") : undefined
+
+	const thinkingText = nonToolMessages
+		.filter((part) => part.type === "thinking" && (part as DiracAssistantThinkingBlock).thinking)
+		.map((part) => (part as DiracAssistantThinkingBlock).thinking)
+		.join("\n")
 
 	const tool_calls: OpenAI.Chat.ChatCompletionMessageToolCall[] = toolMessages.map((toolMessage) => ({
 		id: transformToolCallIdForNativeApi(toolMessage.id, provider),
@@ -213,7 +215,8 @@ function convertAssistantMessage(
 
 	const hasToolCalls = tool_calls.length > 0
 	const hasMeaningfulContent = contentText !== undefined && contentText.trim() !== ""
-	const finalContent = hasMeaningfulContent ? contentText : hasToolCalls ? null : ""
+	const shouldIncludeReasoning = Boolean(includeReasoningContent && thinkingText && provider !== "openai-native")
+	const finalContent = hasMeaningfulContent ? contentText : hasToolCalls && !shouldIncludeReasoning ? null : ""
 
 	const reasoningDetails = collectReasoningDetails(nonToolMessages, toolMessages)
 	const consolidatedReasoningDetails = reasoningDetails.length > 0 ? consolidateReasoningDetails(reasoningDetails) : []
@@ -221,9 +224,59 @@ function convertAssistantMessage(
 	openAiMessages.push({
 		role: "assistant",
 		content: finalContent,
-		tool_calls: tool_calls.length > 0 ? tool_calls : undefined,
+		...(tool_calls.length > 0 ? { tool_calls } : {}),
 		...(consolidatedReasoningDetails.length > 0 ? { reasoning_details: consolidatedReasoningDetails } : {}),
+		...(shouldIncludeReasoning ? { reasoning_content: thinkingText } : {}),
 	})
+}
+
+export type PreserveThinkingMode = "off" | "interleaved" | "all"
+
+
+/** Returns true if this is a real user message (marked with isUserInput, not system-generated). */
+function isRealUserMessage(msg: Omit<DiracStorageMessage, "modelInfo">): boolean {
+	if (msg.role !== "user") return false
+	if (typeof msg.isUserTurn === "boolean") return msg.isUserTurn
+	if (typeof msg.content === "string") return true
+	// Support direct unit tests of convertToOpenAiMessages:
+	if (msg.content.some((part) => part.type === "text" && (part as DiracTextContentBlock).isUserInput === true)) {
+		return true
+	}
+	// Fallback for legacy tasks loaded from disk (where isUserTurn was not recorded):
+	return !msg.content.some((part) => part.type === "tool_result")
+}
+
+/**
+ * Returns the minimum index in the message array from which thinking blocks
+ * are preserved in context, or `Infinity` when preserveThinking is inactive.
+ *
+ * IMPORTANT (off-by-one semantics):
+ * - In `apiConversationHistory`, the message at `startIndex` (in "interleaved" mode) has `role: "user"`,
+ *   so assistant messages after it have index `i > startIndex` (equivalent to `i >= startIndex`).
+ * - In `diracMessages` (UI), streaming assistant messages record
+ *   `conversationHistoryIndex = apiConversationHistory.length - 1` BEFORE the assistant
+ *   turn is appended to `apiConversationHistory`. Thus the first assistant thinking block
+ *   after a user message has `conversationHistoryIndex === startIndex`.
+ *   Always use `>= startIndex` when checking `conversationHistoryIndex`!
+ */
+export function getPreservedThinkingStartIndex(
+	messages: readonly Omit<DiracStorageMessage, "modelInfo">[],
+	preserveThinking: PreserveThinkingMode = "off",
+	provider?: ApiProvider,
+): number {
+	if (preserveThinking === "off" || provider === "openai-native") {
+		return Infinity
+	}
+	if (preserveThinking === "all") {
+		return 0
+	}
+	// preserveThinking === "interleaved"
+	for (let i = messages.length - 1; i >= 0; i--) {
+		if (isRealUserMessage(messages[i])) {
+			return i
+		}
+	}
+	return 0
 }
 
 /**
@@ -235,16 +288,20 @@ function convertAssistantMessage(
  * @param anthropicMessages - Array of DiracStorageMessage objects to be converted
  * @param provider - Optional parameter to indicate the API provider, which may affect ID transformation logic
  * @param supportsImages - Whether the model supports image attachments
+ * @param preserveThinking - When "interleaved", adds reasoning_content to assistant messages after the last real user message
  * @returns Array of OpenAI.Chat.ChatCompletionMessageParam objects
  */
 export function convertToOpenAiMessages(
 	anthropicMessages: Omit<DiracStorageMessage, "modelInfo">[],
 	provider?: ApiProvider,
 	supportsImages = true,
+	preserveThinking: PreserveThinkingMode = "off",
 ): OpenAI.Chat.ChatCompletionMessageParam[] {
 	const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = []
 
-	for (const anthropicMessage of anthropicMessages) {
+	const preserveStartIndex = getPreservedThinkingStartIndex(anthropicMessages, preserveThinking, provider)
+	for (let i = 0; i < anthropicMessages.length; i++) {
+		const anthropicMessage = anthropicMessages[i]
 		if (typeof anthropicMessage.content === "string") {
 			openAiMessages.push({ role: anthropicMessage.role, content: anthropicMessage.content })
 			continue
@@ -252,7 +309,8 @@ export function convertToOpenAiMessages(
 		if (anthropicMessage.role === "user") {
 			convertUserMessage(anthropicMessage.content, provider, supportsImages, openAiMessages)
 		} else if (anthropicMessage.role === "assistant") {
-			convertAssistantMessage(anthropicMessage.content, provider, openAiMessages)
+			const includeReasoning = i >= preserveStartIndex
+			convertAssistantMessage(anthropicMessage.content, provider, openAiMessages, includeReasoning)
 		}
 	}
 

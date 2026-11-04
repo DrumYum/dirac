@@ -343,6 +343,10 @@ export class ApiConversationManager {
 		didConsumeUserContent: boolean
 	}> {
 		let nextUserContent = params.userContent
+		// Capture isUserTurn BEFORE loadContext strips isUserInput from text blocks
+		const isUserTurn = nextUserContent.some(
+			(block) => block.type === "text" && (block as any).isUserInput === true,
+		)
 
 		// 1. Run User Prompt Submit Hook
 		const hookResult = await this.dependencies.runUserPromptSubmitHook(
@@ -486,13 +490,14 @@ export class ApiConversationManager {
 			request: userContent.map((block) => formatContentBlockToMarkdown(block)).join("\n\n"),
 		})
 
-		await this.dependencies.postStateToWebview()
-
 		await this.dependencies.messageStateHandler.addToApiConversationHistory({
 			role: "user",
 			content: userContent,
+			isUserTurn,
 			ts: Date.now(),
 		})
+
+		await this.dependencies.postStateToWebview()
 		const modeNotice = this.dependencies.taskState.pendingModeNotice
 		if (
 			!params.shouldCompact &&

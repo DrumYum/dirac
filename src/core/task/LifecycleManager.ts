@@ -426,7 +426,12 @@ export class LifecycleManager {
 					? lastMessage.content
 					: [{ type: "text", text: lastMessage.content }]
 				modifiedApiConversationHistory = existingApiConversationHistory.slice(0, -1)
-				modifiedOldUserContent = [...existingUserContent]
+				// Preserve user-turn provenance when re-assembling a cancelled/resumed user message:
+				const wasRealUserTurn =
+					lastMessage.isUserTurn ?? !existingUserContent.some((part) => part.type === "tool_result")
+				modifiedOldUserContent = existingUserContent.map((part, idx) =>
+					wasRealUserTurn && idx === 0 && part.type === "text" ? { ...part, isUserInput: true } : part,
+				)
 			} else {
 				throw new Error("Unexpected: Last message is not a user or assistant message")
 			}
