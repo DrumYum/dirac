@@ -61,7 +61,6 @@ async function updateAutoApprovalSettings(controller?: Controller) {
 				editFilesExternally: true,
 				executeCommands: true,
 				useBrowser: false, // Keep browser disabled for tests
-				applyDiff: true,
 			},
 		}
 

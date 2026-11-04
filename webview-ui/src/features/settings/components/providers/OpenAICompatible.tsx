@@ -449,21 +449,32 @@ export const OpenAICompatibleProvider = ({ showModelOptions, isPopup, currentMod
 							}}>
 							Supports Images
 						</VSCodeCheckbox>
-
-						<VSCodeCheckbox
-							checked={!!openAiModelInfo?.isR1FormatRequired}
-							onChange={(e: any) => {
-								const isChecked = (e.target as HTMLInputElement).checked === true
-								let modelInfo = openAiModelInfo ? openAiModelInfo : { ...openAiModelInfoSaneDefaults }
-								modelInfo = { ...modelInfo, isR1FormatRequired: isChecked }
-								handleModeFieldChange(
-									{ plan: "planModeOpenAiModelInfo", act: "actModeOpenAiModelInfo" },
-									modelInfo,
-									currentMode,
-								)
-							}}>
-							Enable R1 messages format
-						</VSCodeCheckbox>
+						<div className="flex flex-col gap-1">
+							<span className="text-xs font-medium">Preserve thinking in context</span>
+							<VSCodeDropdown
+								value={openAiModelInfo?.preserveThinking ?? "off"}
+								onChange={(e: any) => {
+									const value = (e.target as HTMLSelectElement).value as "off" | "interleaved" | "all"
+									const modelInfo = openAiModelInfo ? { ...openAiModelInfo } : { ...openAiModelInfoSaneDefaults }
+									modelInfo.preserveThinking = value
+									handleModeFieldChange(
+										{ plan: "planModeOpenAiModelInfo", act: "actModeOpenAiModelInfo" },
+										modelInfo,
+										currentMode,
+									)
+								}}>
+								<VSCodeOption value="off">Off — discard after each step</VSCodeOption>
+								<VSCodeOption value="interleaved">Current turn — keep across tool calls</VSCodeOption>
+								<VSCodeOption value="all">Entire conversation — keep across all turns</VSCodeOption>
+							</VSCodeDropdown>
+							<span className="text-xs text-description">
+								{(openAiModelInfo?.preserveThinking ?? "off") === "interleaved"
+									? "Keeps reasoning in context between tool calls within the current turn, then clears it on your next message."
+									: (openAiModelInfo?.preserveThinking ?? "off") === "all"
+										? "Retains reasoning in context for the entire conversation across all user messages."
+										: "Reasoning is shown in the UI only and not sent back to the model."}
+							</span>
+						</div>
 
 						<div className="flex gap-2">
 							<DebouncedTextField
