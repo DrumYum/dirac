@@ -17,8 +17,9 @@ Dirac itself builds on [Cline](https://github.com/cline/cline) — credit to the
 ### R1 format removal
 - **Removed `r1-format.ts`** and the `isR1FormatRequired` flag. All providers (DeepSeek, Kimi/Moonshot, Fireworks, Groq, Nebius, Together, Qwen, SambaNova, Bedrock, Vercel AI Gateway) now use a unified `preserveThinking` setting in `convertToOpenAiMessages`. This fixes tool-call handling for Qwen3/DeepSeek (the old `convertToR1Format` silently dropped tool calls) and eliminates triple message conversion in `openai.ts`.
 
-### UI fixes
+### Bug fixes
 - **@ mention fix** — selecting a file from the autocomplete menu no longer duplicates the typed query (stale closure bug in `useMentionTrait`).
+- **Fixed false context truncation notice** — when auto-condense was disabled, `TaskRequestBuilder` unconditionally appended `[NOTE] Some previous conversation history with the user has been removed...` to the last user message on every request (mutating it in place), even when no history had actually been truncated. The notice is now only added when `conversationHistoryDeletedRange` is present.
 
 ### Cleanup
 - **Removed dead "Edit (anchors)" auto-approve toggle** — the `applyDiff` setting was never read by any logic; removed from settings and UI.

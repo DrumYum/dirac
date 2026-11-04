@@ -253,20 +253,18 @@ export async function buildApiRequestParams(
 	}
 
 	const useAutoCondense = settings.useAutoCondense
-	if (!useAutoCondense) {
-		const lastMessage =
-			contextManagementMetadata.truncatedConversationHistory[
-			contextManagementMetadata.truncatedConversationHistory.length - 1
-			]
+	if (!useAutoCondense && ctx.taskState.conversationHistoryDeletedRange) {
+		const history = contextManagementMetadata.truncatedConversationHistory
+		const lastMessage = history[history.length - 1]
 		if (lastMessage && lastMessage.role === "user") {
 			const notice = formatResponse.contextTruncationNotice()
 			if (typeof lastMessage.content === "string") {
-				lastMessage.content += `\n\n${notice}`
+				history[history.length - 1] = { ...lastMessage, content: `${lastMessage.content}\n\n${notice}` }
 			} else if (Array.isArray(lastMessage.content)) {
-				lastMessage.content.push({
-					type: "text",
-					text: notice,
-				})
+				history[history.length - 1] = {
+					...lastMessage,
+					content: [...lastMessage.content, { type: "text", text: notice }],
+				}
 			}
 		}
 	}
