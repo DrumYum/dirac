@@ -6,8 +6,6 @@ import { createOpenAIClient } from "@/shared/net"
 import { ApiHandler, CommonApiHandlerOptions } from "../index"
 import { withRetry } from "../retry"
 import { convertToOpenAiMessages } from "../transform/openai-format"
-import { convertToR1Format } from "../transform/r1-format"
-import { addReasoningContent } from "../transform/r1-format"
 import { ApiStream } from "../transform/stream"
 import { formatOpenAiCompatibleUsage } from "../transform/openai-usage"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
@@ -46,30 +44,18 @@ export class TogetherHandler implements ApiHandler {
 	async *createMessage(systemPrompt: string, messages: DiracStorageMessage[], tools?: OpenAITool[]): ApiStream {
 		const client = this.ensureClient()
 		const modelId = this.options.togetherModelId ?? ""
-		const isDeepseek = modelId.includes("deepseek")
 		const model = this.getModel()
 
-		let openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+		const preserveThinking = model.info.preserveThinking ?? "off" // resolved in getModel()
+		const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
 			{ role: "system", content: systemPrompt },
-			...convertToOpenAiMessages(messages, undefined, this.getModel().info.supportsImages !== false),
+			...convertToOpenAiMessages(
+				messages,
+				undefined,
+				this.getModel().info.supportsImages !== false,
+				preserveThinking as any,
+			),
 		]
-
-		if (isDeepseek || (model.info as any).isR1FormatRequired) {
-			if ((model.info as any).supportsTools) {
-				openAiMessages = [
-					{ role: "system", content: systemPrompt },
-					...addReasoningContent(
-						convertToOpenAiMessages(messages, undefined, this.getModel().info.supportsImages !== false),
-						messages,
-					),
-				]
-			} else {
-				openAiMessages = convertToR1Format(
-					[{ role: "user", content: systemPrompt }, ...messages],
-					this.getModel().info.supportsImages !== false,
-				)
-			}
-		}
 
 		const stream = await client.chat.completions.create({
 			model: modelId,
@@ -109,7 +95,7 @@ export class TogetherHandler implements ApiHandler {
 	getModel(): { id: string; info: ModelInfo } {
 		return {
 			id: this.options.togetherModelId ?? "",
-			info: openAiModelInfoSaneDefaults,
+			info: { ...openAiModelInfoSaneDefaults, preserveThinking: (this.options.togetherModelId ?? "").includes("deepseek") ? "all" : "off" },
 		}
 	}
 }

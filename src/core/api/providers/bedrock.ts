@@ -2,18 +2,18 @@
 
 import type { Message, SystemContentBlock, ToolConfiguration } from "@aws-sdk/client-bedrock-runtime"
 import {
-	BedrockRuntimeClient,
-	ConverseCommand,
-	ConverseStreamCommand,
-	InvokeModelWithResponseStreamCommand,
+    BedrockRuntimeClient,
+    ConverseCommand,
+    ConverseStreamCommand,
+    InvokeModelWithResponseStreamCommand,
 } from "@aws-sdk/client-bedrock-runtime"
 import {
-	type BedrockModelId,
-	bedrockDefaultModelId,
-	bedrockModels,
-	getAnthropicReasoningEffort,
-	isAnthropicAdaptiveThinkingSupported,
-	type ModelInfo,
+    type BedrockModelId,
+    bedrockDefaultModelId,
+    bedrockModels,
+    getAnthropicReasoningEffort,
+    isAnthropicAdaptiveThinkingSupported,
+    type ModelInfo,
 } from "@shared/api"
 import { calculateApiCostOpenAI, calculateApiCostQwen } from "@utils/cost"
 import { ExtensionRegistryInfo } from "@/registry"
@@ -23,19 +23,18 @@ import { Logger } from "@/shared/services/Logger"
 import type { DiracTool } from "@/shared/tools"
 import type { ApiHandler, CommonApiHandlerOptions } from "../"
 import { withRetry } from "../retry"
-import { convertToR1Format } from "../transform/r1-format"
 import type { ApiStream } from "../transform/stream"
 import { createBedrockClient, resolveAwsCredentials } from "./bedrock-client"
 import {
-	applyCacheControlToMessages,
-	chunkText,
-	estimateTokenCount,
-	extractNonStreamingContent,
-	formatConverseError,
-	formatMessagesForConverseAPI,
-	getInferenceConfig,
-	mapDiracToolsToBedrockToolConfig,
-	prepareSystemMessages,
+    applyCacheControlToMessages,
+    chunkText,
+    estimateTokenCount,
+    extractNonStreamingContent,
+    formatConverseError,
+    formatMessagesForConverseAPI,
+    getInferenceConfig,
+    mapDiracToolsToBedrockToolConfig,
+    prepareSystemMessages,
 } from "./bedrock-converse-utils"
 import { BedrockStreamParser } from "./bedrock-stream-parser"
 
@@ -389,31 +388,32 @@ export class AwsBedrockHandler implements ApiHandler {
 	 * then converts to the string format that DeepSeek R1 expects
 	 */
 	private formatDeepseekR1Prompt(systemPrompt: string, messages: DiracStorageMessage[]): string {
-		// First use convertToR1Format to merge consecutive messages with the same role
-		const r1Messages = convertToR1Format(
-			[{ role: "user", content: systemPrompt }, ...messages],
-			this.getModel().info.supportsImages !== false,
-		)
+		// Merge consecutive messages with the same role (was convertToR1Format, inlined)
+		type FlatMessage = { role: string; content: string }
+		const flatMessages: FlatMessage[] = []
+		const allMessages = [{ role: "user" as const, content: systemPrompt }, ...messages]
+		for (const msg of allMessages) {
+			const text =
+				typeof msg.content === "string"
+					? msg.content
+					: Array.isArray(msg.content)
+						? msg.content
+								.filter((part: any) => part.type === "text")
+								.map((part: any) => part.text || "")
+								.join("\n")
+						: ""
+			const last = flatMessages[flatMessages.length - 1]
+			if (last && last.role === msg.role) {
+				last.content += "\n" + text
+			} else {
+				flatMessages.push({ role: msg.role, content: text })
+			}
+		}
 
 		// Then convert to the special string format expected by DeepSeek R1
 		let combinedContent = ""
-
-		for (const message of r1Messages) {
-			let content = ""
-
-			if (message.content) {
-				if (typeof message.content === "string") {
-					content = message.content
-				} else {
-					// Extract text content from message parts
-					content = message.content
-						.filter((part) => part.type === "text")
-						.map((part) => part.text)
-						.join("\n")
-				}
-			}
-
-			combinedContent += message.role === "user" ? "User: " + content + "\n" : "Assistant: " + content + "\n"
+		for (const message of flatMessages) {
+			combinedContent += message.role === "user" ? "User: " + message.content + "\n" : "Assistant: " + message.content + "\n"
 		}
 
 		// Format according to DeepSeek R1's expected prompt format

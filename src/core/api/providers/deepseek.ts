@@ -10,7 +10,6 @@ import { ApiHandler, CommonApiHandlerOptions } from "../"
 import { withRetry } from "../retry"
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import { formatOpenAiCompatibleUsage } from "../transform/openai-usage"
-import { addReasoningContent } from "../transform/r1-format"
 import { ApiStream } from "../transform/stream"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
 
@@ -79,17 +78,14 @@ export class DeepSeekHandler implements ApiHandler {
 		const isThinkingEnabled = supportsReasoning && requestedEffort !== "none"
 		const useReasoningFormat = isThinkingEnabled
 
-		const shouldAddReasoningContent = supportsReasoning
 
-		const convertedMessages = convertToOpenAiMessages(messages, undefined, model.info.supportsImages !== false)
-		const openAiMessages = shouldAddReasoningContent
-			? [
-				{ role: "system", content: systemPrompt },
-				...addReasoningContent(convertedMessages, messages, {
-					onlyIfToolCall: !tools?.length,
-				}),
-			]
-			: [{ role: "system", content: systemPrompt }, ...convertedMessages]
+		const convertedMessages = convertToOpenAiMessages(
+			messages,
+			undefined,
+			model.info.supportsImages !== false,
+			model.info.preserveThinking ?? "off",
+		)
+		const openAiMessages = [{ role: "system" as const, content: systemPrompt }, ...convertedMessages]
 
 		// DeepSeek.com API requires reasoning_content to be passed back for ALL assistant messages
 		// and content to be at least an empty string (not null).
@@ -182,11 +178,13 @@ export class DeepSeekHandler implements ApiHandler {
 		const modelId = this.options.apiModelId
 		if (modelId && modelId in deepSeekModels) {
 			const id = modelId as DeepSeekModelId
-			return { id, info: deepSeekModels[id] }
+			const info = deepSeekModels[id]
+			const resolved = info.preserveThinking ?? (info.supportsReasoning ? "all" : undefined)
+			return { id, info: resolved ? { ...info, preserveThinking: resolved } : (info as unknown as ModelInfo) }
 		}
 		return {
 			id: deepSeekDefaultModelId,
-			info: deepSeekModels[deepSeekDefaultModelId],
+			info: deepSeekModels[deepSeekDefaultModelId] as unknown as ModelInfo,
 		}
 	}
 }

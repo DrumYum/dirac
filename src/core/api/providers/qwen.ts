@@ -1,12 +1,12 @@
 import {
-	InternationalQwenModelId,
-	internationalQwenDefaultModelId,
-	internationalQwenModels,
-	MainlandQwenModelId,
-	ModelInfo,
-	mainlandQwenDefaultModelId,
-	mainlandQwenModels,
-	QwenApiRegions,
+    InternationalQwenModelId,
+    internationalQwenDefaultModelId,
+    internationalQwenModels,
+    MainlandQwenModelId,
+    ModelInfo,
+    mainlandQwenDefaultModelId,
+    mainlandQwenModels,
+    QwenApiRegions,
 } from "@shared/api"
 import OpenAI from "openai"
 import type { ChatCompletionTool as OpenAITool } from "openai/resources/chat/completions"
@@ -16,7 +16,6 @@ import { Logger } from "@/shared/services/Logger"
 import { ApiHandler, CommonApiHandlerOptions } from "../"
 import { withRetry } from "../retry"
 import { convertToOpenAiMessages } from "../transform/openai-format"
-import { convertToR1Format } from "../transform/r1-format"
 import { ApiStream } from "../transform/stream"
 import { formatOpenAiCompatibleUsage } from "../transform/openai-usage"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
@@ -70,7 +69,7 @@ export class QwenHandler implements ApiHandler {
 			const id = modelId && modelId in mainlandQwenModels ? (modelId as MainlandQwenModelId) : mainlandQwenDefaultModelId
 			return {
 				id,
-				info: mainlandQwenModels[id],
+				info: { ...(mainlandQwenModels[id] as ModelInfo), preserveThinking: (mainlandQwenModels[id] as ModelInfo).preserveThinking ?? (id.includes("deepseek") || (id.includes("qwen3") && (this.options.thinkingBudgetTokens || 0) !== 0) ? "all" : "off") },
 			}
 		}
 		const id =
@@ -79,7 +78,7 @@ export class QwenHandler implements ApiHandler {
 				: internationalQwenDefaultModelId
 		return {
 			id,
-			info: internationalQwenModels[id],
+			info: { ...(internationalQwenModels[id] as ModelInfo), preserveThinking: (internationalQwenModels[id] as ModelInfo).preserveThinking ?? (id.includes("deepseek") || (id.includes("qwen3") && (this.options.thinkingBudgetTokens || 0) !== 0) ? "all" : "off") },
 		}
 	}
 
@@ -90,15 +89,21 @@ export class QwenHandler implements ApiHandler {
 		const isDeepseek = model.id.includes("deepseek")
 		const isReasoningModelFamily = model.id.includes("qwen3") || ["qwen-plus-latest", "qwen-turbo-latest"].includes(model.id)
 
-		let openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+		const budgetTokens = this.options.thinkingBudgetTokens || 0
+		const reasoningOn = budgetTokens !== 0
+		const preserveThinking = model.info.preserveThinking ?? "off" // resolved in getModel()
+		const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
 			{ role: "system", content: systemPrompt },
-			...convertToOpenAiMessages(messages, undefined, this.getModel().info.supportsImages !== false),
+			...convertToOpenAiMessages(
+				messages,
+				undefined,
+				this.getModel().info.supportsImages !== false,
+				preserveThinking as any,
+			),
 		]
 
 		let temperature: number | undefined = 0
 		// Configuration for extended thinking
-		const budgetTokens = this.options.thinkingBudgetTokens || 0
-		const reasoningOn = budgetTokens !== 0
 		const thinkingArgs = isReasoningModelFamily
 			? {
 					enable_thinking: reasoningOn,
@@ -107,10 +112,6 @@ export class QwenHandler implements ApiHandler {
 			: undefined
 
 		if (isDeepseek || (reasoningOn && isReasoningModelFamily)) {
-			openAiMessages = convertToR1Format(
-				[{ role: "user", content: systemPrompt }, ...messages],
-				this.getModel().info.supportsImages !== false,
-			)
 			temperature = undefined
 		}
 

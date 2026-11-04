@@ -6,8 +6,6 @@ import { createOpenAIClient } from "@/shared/net"
 import { ApiHandler, CommonApiHandlerOptions } from "../index"
 import { withRetry } from "../retry"
 import { convertToOpenAiMessages } from "../transform/openai-format"
-import { convertToR1Format } from "../transform/r1-format"
-import { addReasoningContent } from "../transform/r1-format"
 import { ApiStream } from "../transform/stream"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
 
@@ -46,29 +44,16 @@ export class SambanovaHandler implements ApiHandler {
 		const client = this.ensureClient()
 		const model = this.getModel()
 
-		let openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+		const preserveThinking = model.info.preserveThinking ?? "off" // resolved in getModel()
+		const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
 			{ role: "system", content: systemPrompt },
-			...convertToOpenAiMessages(messages, undefined, this.getModel().info.supportsImages !== false),
+			...convertToOpenAiMessages(
+				messages,
+				undefined,
+				this.getModel().info.supportsImages !== false,
+				preserveThinking as any,
+			),
 		]
-
-		const modelId = model.id.toLowerCase()
-
-		if (modelId.includes("deepseek") || modelId.includes("qwen3")) {
-			if ((model.info as any).supportsTools) {
-				openAiMessages = [
-					{ role: "system", content: systemPrompt },
-					...addReasoningContent(
-						convertToOpenAiMessages(messages, undefined, this.getModel().info.supportsImages !== false),
-						messages,
-					),
-				]
-			} else {
-				openAiMessages = convertToR1Format(
-					[{ role: "user", content: systemPrompt }, ...messages],
-					this.getModel().info.supportsImages !== false,
-				)
-			}
-		}
 
 		const toolCallProcessor = new ToolCallProcessor()
 		const stream = await client.chat.completions.create({
@@ -107,11 +92,12 @@ export class SambanovaHandler implements ApiHandler {
 		const modelId = this.options.apiModelId
 		if (modelId && modelId in sambanovaModels) {
 			const id = modelId as SambanovaModelId
-			return { id, info: sambanovaModels[id] }
+			const baseInfo = sambanovaModels[id]
+			return { id, info: { ...baseInfo, preserveThinking: baseInfo.preserveThinking ?? (id.toLowerCase().includes("deepseek") || id.toLowerCase().includes("qwen3") ? "all" : "off") } }
 		}
 		return {
 			id: sambanovaDefaultModelId,
-			info: sambanovaModels[sambanovaDefaultModelId],
+			info: (() => { const b = sambanovaModels[sambanovaDefaultModelId]; return { ...b, preserveThinking: b.preserveThinking ?? "off" } })(),
 		}
 	}
 }

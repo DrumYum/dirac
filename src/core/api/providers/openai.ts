@@ -9,8 +9,6 @@ import { createOpenAIClient, fetch } from "@/shared/net"
 import { ApiHandler, CommonApiHandlerOptions } from "../index"
 import { withRetry } from "../retry"
 import { convertToOpenAiMessages } from "../transform/openai-format"
-import { addReasoningContent } from "../transform/r1-format"
-import { convertToR1Format } from "../transform/r1-format"
 import { ApiStream } from "../transform/stream"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
 import { formatOpenAiCompatibleUsage } from "../transform/openai-usage"
@@ -138,14 +136,13 @@ export class OpenAiHandler implements ApiHandler {
 			finalTools.push({ type: "web_search" } as any)
 		}
 		const modelId = this.options.openAiModelId ?? ""
-		const isDeepseek = modelId.toLowerCase().includes("deepseek")
-		const isR1FormatRequired = this.options.openAiModelInfo?.isR1FormatRequired ?? false
 		const isReasoningModelFamily =
 			["o1", "o3", "o4", "gpt-5"].some((prefix) => modelId.includes(prefix)) && !modelId.includes("chat")
-
-		let openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-			{ role: "system", content: systemPrompt },
-			...convertToOpenAiMessages(messages, undefined, this.getModel().info.supportsImages !== false),
+		const systemRole = isReasoningModelFamily ? "developer" : "system"
+		const preserveThinking = this.options.openAiModelInfo?.preserveThinking ?? "off"
+		const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+			{ role: systemRole, content: systemPrompt },
+			...convertToOpenAiMessages(messages, undefined, this.getModel().info.supportsImages !== false, preserveThinking),
 		]
 		let temperature: number | undefined
 		if (this.options.openAiModelInfo?.temperature !== undefined) {
@@ -163,26 +160,6 @@ export class OpenAiHandler implements ApiHandler {
 			maxTokens = undefined
 		}
 
-		if (isDeepseek || isR1FormatRequired) {
-			const modelInfo = this.getModel().info
-			if ((modelInfo as any).supportsTools || (modelInfo as any).isR1FormatRequired) {
-				// If the model supports tools or specifically requires R1 format (which includes reasoning_content),
-				// we use convertToOpenAiMessages + addReasoningContent to preserve tool calls.
-				// convertToR1Format merges messages but loses tools.
-				openAiMessages = [
-					{ role: "system", content: systemPrompt },
-					...addReasoningContent(
-						convertToOpenAiMessages(messages, undefined, this.getModel().info.supportsImages !== false),
-						messages,
-					),
-				]
-			} else {
-				openAiMessages = convertToR1Format(
-					[{ role: "user", content: systemPrompt }, ...messages],
-					this.getModel().info.supportsImages !== false,
-				)
-			}
-		}
 
 		// "none" is a first-class ReasoningEffort value in the OpenAI SDK, so send it rather than
 		// omitting the field: omitting lets the server apply its own default, which for several
@@ -191,10 +168,6 @@ export class OpenAiHandler implements ApiHandler {
 		reasoningEffort = normalizeOpenaiReasoningEffort(this.options.reasoningEffort) as ChatCompletionReasoningEffort
 
 		if (isReasoningModelFamily) {
-			openAiMessages = [
-				{ role: "developer", content: systemPrompt },
-				...convertToOpenAiMessages(messages, undefined, this.getModel().info.supportsImages !== false),
-			]
 			temperature = undefined // does not support temperature
 		}
 

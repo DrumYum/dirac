@@ -199,7 +199,6 @@ const PROVIDER_REGISTRY: Record<
 				...(openAiModelInfo || openAiModelInfoSaneDefaults),
 				supportsTools: true,
 				supportsReasoning: true,
-				isR1FormatRequired: true,
 			}
 		}
 		const apiKey = cfg.openAiCompatibleCustomApiKey || openAiApiKey

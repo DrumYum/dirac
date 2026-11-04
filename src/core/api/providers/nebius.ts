@@ -7,8 +7,6 @@ import { Logger } from "@/shared/services/Logger"
 import { ApiHandler, CommonApiHandlerOptions } from "../index"
 import { withRetry } from "../retry"
 import { convertToOpenAiMessages } from "../transform/openai-format"
-import { convertToR1Format } from "../transform/r1-format"
-import { addReasoningContent } from "../transform/r1-format"
 import { ApiStream } from "../transform/stream"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
 
@@ -44,17 +42,17 @@ export class NebiusHandler implements ApiHandler {
 		const client = this.ensureClient()
 		const model = this.getModel()
 
-		const convertedMessages = convertToOpenAiMessages(messages, undefined, this.getModel().info.supportsImages !== false)
-		const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] =
-			model.id.includes("DeepSeek-R1") || (model.info as any).isR1FormatRequired
-				? (model.info as any).supportsTools
-					? [{ role: "system", content: systemPrompt }, ...addReasoningContent(convertedMessages, messages)]
-					: convertToR1Format(
-							[{ role: "user", content: systemPrompt }, ...messages],
-							this.getModel().info.supportsImages !== false,
-						)
-				: [{ role: "system", content: systemPrompt }, ...convertedMessages]
-
+		const preserveThinking = model.info.preserveThinking ?? "off"
+		const convertedMessages = convertToOpenAiMessages(
+			messages,
+			undefined,
+			this.getModel().info.supportsImages !== false,
+			preserveThinking as any,
+		)
+		const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+			{ role: "system", content: systemPrompt },
+			...convertedMessages,
+		]
 		const stream = await client.chat.completions.create({
 			model: model.id,
 			messages: openAiMessages,
@@ -98,7 +96,8 @@ export class NebiusHandler implements ApiHandler {
 		const modelId = this.options.apiModelId
 
 		if (modelId !== undefined && modelId in nebiusModels) {
-			return { id: modelId, info: nebiusModels[modelId as NebiusModelId] }
+			const info = nebiusModels[modelId as NebiusModelId] as ModelInfo
+			return { id: modelId, info: { ...info, preserveThinking: info.preserveThinking ?? (modelId.includes("DeepSeek-R1") || info.preserveThinking === "all" ? "all" : "off") } }
 		}
 		if (modelId !== undefined) {
 			// Fail loudly: silently swapping the requested model for the default
@@ -107,6 +106,7 @@ export class NebiusHandler implements ApiHandler {
 				`[NebiusHandler] Unknown Nebius model '${modelId}'; falling back to ${nebiusDefaultModelId}. Available: ${Object.keys(nebiusModels).join(", ")}`,
 			)
 		}
-		return { id: nebiusDefaultModelId, info: nebiusModels[nebiusDefaultModelId] }
+		const info = nebiusModels[nebiusDefaultModelId] as ModelInfo
+		return { id: nebiusDefaultModelId, info: { ...info, preserveThinking: info.preserveThinking ?? "off" } }
 	}
 }

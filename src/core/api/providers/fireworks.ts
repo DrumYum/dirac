@@ -6,7 +6,6 @@ import { ApiHandler, CommonApiHandlerOptions } from ".."
 import { withRetry } from "../retry"
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import { formatOpenAiCompatibleUsage } from "../transform/openai-usage"
-import { addReasoningContent } from "../transform/r1-format"
 import { ApiStream } from "../transform/stream"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
 import { DiracTool } from "@/shared/tools"
@@ -49,10 +48,15 @@ export class FireworksHandler implements ApiHandler {
 		const modelId = this.options.fireworksModelId ?? ""
 
 		const model = this.getModel()
-		const convertedMessages = convertToOpenAiMessages(messages, undefined, this.getModel().info.supportsImages !== false)
+		const convertedMessages = convertToOpenAiMessages(
+			messages,
+			undefined,
+			this.getModel().info.supportsImages !== false,
+			model.info.preserveThinking ?? "off",
+		)
 		const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
 			{ role: "system", content: systemPrompt },
-			...((model.info as any).isR1FormatRequired ? addReasoningContent(convertedMessages, messages) : convertedMessages),
+			...convertedMessages,
 		]
 		const toolParams = getOpenAIToolParams(tools as any)
 

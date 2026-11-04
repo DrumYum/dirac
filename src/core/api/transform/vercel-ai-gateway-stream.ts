@@ -5,7 +5,6 @@ import { shouldSkipReasoningForModel, supportsReasoningEffortForModel } from "@u
 import OpenAI from "openai"
 import type { ChatCompletionTool as OpenAITool } from "openai/resources/chat/completions"
 import { convertToOpenAiMessages, sanitizeGeminiMessages } from "../transform/openai-format"
-import { convertToR1Format } from "./r1-format"
 import { getOpenAIToolParams } from "./tool-call-processor"
 
 export async function createVercelAIGatewayStream(
@@ -77,16 +76,19 @@ export async function createVercelAIGatewayStream(
 	let temperature: number | undefined = model.info?.temperature ?? 0
 	let topP: number | undefined
 
-	// R1 format conversion for DeepSeek and similar reasoning models
-	const requiresR1Format =
+	// Force all-thinking for models that require it (DeepSeek-R1, QwQ, Sonar)
+	const requiresAllThinking =
 		model.id.startsWith("deepseek/deepseek-r1") ||
 		model.id === "perplexity/sonar-reasoning" ||
 		model.id === "qwen/qwq-32b:free" ||
 		model.id === "qwen/qwq-32b"
 
-	if (requiresR1Format) {
+	if (requiresAllThinking) {
 		topP = 0.95
-		openAiMessages = convertToR1Format([{ role: "user", content: systemPrompt }, ...messages])
+		openAiMessages = [
+			{ role: "system", content: systemPrompt },
+			...convertToOpenAiMessages(messages as any, undefined, true, "all"),
+		]
 	}
 	if (model.id.startsWith("google/gemini-3")) {
 		// Recommended value from google
